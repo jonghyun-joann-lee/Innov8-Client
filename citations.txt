@@ -1,0 +1,7 @@
+- https://github.com/griffinnewbold/COMS-4156-App
+- https://docs.spring.io/spring-boot/docs/2.0.x/reference/html/boot-features-resttemplate.html
+- https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html#getForEntity(java.lang.String,java.lang.Class,java.lang.Object...)
+- https://www.geeksforgeeks.org/spring-boot-rest-template/
+- https://howtodoinjava.com/spring-boot2/resttemplate/spring-restful-client-resttemplate-example/
+- https://docs.spring.io/spring-framework/docs/4.0.2.RELEASE_to_4.0.3.RELEASE/changes/org.springframework.http.HttpStatus.html
+- https://www.geeksforgeeks.org/spring-boot-thymeleaf-with-example/
