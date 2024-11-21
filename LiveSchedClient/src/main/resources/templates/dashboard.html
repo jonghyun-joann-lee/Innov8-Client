@@ -2,13 +2,71 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LiveSched - Task Dashboard</title>
+    <link
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+            rel="stylesheet"
+    />
+    <style>
+        h1 {
+            margin: 20px;
+            text-align: center;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-  <h1>Task Dashboard</h1>
-  <div>
-    <h2>Tasks</h2>
-    <pre th:text="${tasks}">No tasks to display.</pre>
-  </div>
+<h1>Task Dashboard</h1>
+<div class="container mt-5">
+    <!-- Search and Sort -->
+    <form method="get" action="/dashboard" class="form-inline mb-3">
+        <div class="form-group mr-3">
+            <input
+                    type="text"
+                    name="taskId"
+                    placeholder="Search by Task ID"
+                    class="form-control"
+            />
+        </div>
+        <div class="form-group mr-3">
+            <select name="sort" class="form-control">
+                <option value="" disabled selected>Sort by Priority</option>
+                <option value="asc">Highest Priority First</option>
+                <option value="desc">Lowest Priority First</option>
+            </select>
+        </div>
+        <div class="form-group mr-3">
+            <button type="submit" class="btn btn-primary">Search/Sort</button>
+        </div>
+    </form>
+
+    <!-- Error Message -->
+    <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+
+    <!-- Task Table -->
+    <table class="table table-bordered table-striped" th:if="${tasks}">
+        <thead class="thead-dark">
+        <tr>
+            <th>Task ID</th>
+            <th>Task Name</th>
+            <th>Priority</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Location Coordinates</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="task : ${tasks}">
+            <td th:text="${task['taskId']}"></td>
+            <td th:text="${task['taskName']}"></td>
+            <td th:text="${task['priority']}"></td>
+            <td th:text="${task['startTime'].substring(0, 16)}"></td>
+            <td th:text="${task['endTime'].substring(0, 16)}"></td>
+            <td th:text="${task['location']['coordinates']}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

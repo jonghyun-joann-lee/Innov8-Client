@@ -1,5 +1,10 @@
 package dev.coms4156.project.liveschedclient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -14,7 +19,10 @@ import org.springframework.web.client.RestTemplate;
 public class LiveSchedService {
 
   private final RestTemplate restTemplate;
-  private static final String BASE_URL = "https://innov8-livesched.ue.r.appspot.com";
+
+  // Change BASE_URL to "https://innov8-livesched.ue.r.appspot.com" after deployment;
+  private static final String BASE_URL = "http://localhost:8080";
+
 
   /**
    * Constructor to initialize the RestTemplate for making HTTP requests.
@@ -37,21 +45,54 @@ public class LiveSchedService {
    *
    * @return A message indicating the response from the server.
    */
-  public String getAllTasks() {
+  public List<Map<String, Object>> getAllTasks() {
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(
           BASE_URL + "/retrieveTasks", String.class);
 
       if (response.getStatusCode().is2xxSuccessful()) {
-        return response.getBody();
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(
+            response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
       } else {
-        return "Unexpected response status: " + response.getStatusCode();
+        return List.of(Map.of(
+            "error", "Unexpected response status: " + response.getStatusCode()));
       }
-
     } catch (HttpClientErrorException.NotFound e) {
-      return "No tasks found.";
+      return List.of(); // Return empty list if no tasks found
+    } catch (JsonProcessingException e) {
+      return List.of(Map.of("error", "Failed to parse JSON response."));
     } catch (RestClientException e) {
-      return "Error connecting to the service: " + e.getMessage();
+      return List.of(Map.of("error", "Error connecting to the service."));
     }
   }
+
+  /**
+   * Retrieves a specific task by its ID from the server's retrieveTask endpoint.
+   *
+   * @param taskId A {@code String} representing the ID of the task to retrieve.
+   *
+   * @return A message indicating the response from the server.
+   */
+  public Map<String, Object> getTaskById(String taskId) {
+    try {
+      ResponseEntity<String> response = restTemplate.getForEntity(
+          BASE_URL + "/retrieveTask?taskId=" + taskId, String.class
+      );
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(response.getBody(), new TypeReference<>() {});
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
+      }
+    } catch (HttpClientErrorException.NotFound e) {
+      return Map.of("error", "Task not found.");
+    } catch (JsonProcessingException e) {
+      return Map.of("error", "Failed to parse JSON response.");
+    } catch (RestClientException e) {
+      return Map.of("error", "Error connecting to the service.");
+    }
+  }
+
 }

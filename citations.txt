@@ -5,3 +5,6 @@
 - https://howtodoinjava.com/spring-boot2/resttemplate/spring-restful-client-resttemplate-example/
 - https://docs.spring.io/spring-framework/docs/4.0.2.RELEASE_to_4.0.3.RELEASE/changes/org.springframework.http.HttpStatus.html
 - https://www.geeksforgeeks.org/spring-boot-thymeleaf-with-example/
+- https://www.baeldung.com/rest-template
+- https://www.baeldung.com/jackson-object-mapper-tutorial
+- https://bootstrapshuffle.com/classes/tables/table
