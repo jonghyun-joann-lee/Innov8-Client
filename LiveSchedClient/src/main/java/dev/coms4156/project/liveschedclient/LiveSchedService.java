@@ -3,6 +3,9 @@ package dev.coms4156.project.liveschedclient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -23,6 +26,7 @@ public class LiveSchedService {
   // Change BASE_URL to "https://innov8-livesched.ue.r.appspot.com" after deployment;
   private static final String BASE_URL = "http://localhost:8080";
 
+  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
   /**
    * Constructor to initialize the RestTemplate for making HTTP requests.
@@ -52,8 +56,15 @@ public class LiveSchedService {
 
       if (response.getStatusCode().is2xxSuccessful()) {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(
+        List<Map<String, Object>> tasks = mapper.readValue(
             response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+
+        // Format startTime and endTime for each task
+        for (Map<String, Object> task : tasks) {
+          formatTime(task);
+        }
+
+        return tasks;
       } else {
         return List.of(Map.of(
             "error", "Unexpected response status: " + response.getStatusCode()));
@@ -82,7 +93,9 @@ public class LiveSchedService {
 
       if (response.getStatusCode().is2xxSuccessful()) {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(response.getBody(), new TypeReference<>() {});
+        Map<String, Object> task = mapper.readValue(response.getBody(), new TypeReference<>() {});
+        formatTime(task);
+        return task;
       } else {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
@@ -92,6 +105,23 @@ public class LiveSchedService {
       return Map.of("error", "Failed to parse JSON response.");
     } catch (RestClientException e) {
       return Map.of("error", "Error connecting to the service.");
+    }
+  }
+
+  /**
+   * Helper method to format the timestamps in a task map.
+   *
+   * @param task A map containing task details, including startTime and endTime.
+   */
+  private void formatTime(Map<String, Object> task) {
+    String startTime = (String) task.get("startTime");
+    String endTime = (String) task.get("endTime");
+
+    if (startTime != null) {
+      task.put("startTime", LocalDateTime.parse(startTime).format(FORMATTER));
+    }
+    if (endTime != null) {
+      task.put("endTime", LocalDateTime.parse(endTime).format(FORMATTER));
     }
   }
 

@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LiveSched - Task Dashboard</title>
-    <link
-            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-            rel="stylesheet"
-    />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
     <style>
         h1 {
             margin: 20px;
             text-align: center;
             color: #333;
+        }
+
+        tr[data-href] {
+            cursor: pointer;
+        }
+
+        tr[data-href]:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
@@ -45,7 +50,7 @@
     <p th:if="${message}" th:text="${message}" class="text-danger"></p>
 
     <!-- Task Table -->
-    <table class="table table-bordered table-striped" th:if="${tasks}">
+    <table class="table table-bordered" th:if="${tasks}">
         <thead class="thead-dark">
         <tr>
             <th>Task ID</th>
@@ -53,17 +58,15 @@
             <th>Priority</th>
             <th>Start Time</th>
             <th>End Time</th>
-            <th>Location Coordinates</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="task : ${tasks}">
+        <tr th:each="task : ${tasks}" th:attr="data-href='/task/' + ${task['taskId']}" onclick="window.location=this.getAttribute('data-href')">
             <td th:text="${task['taskId']}"></td>
             <td th:text="${task['taskName']}"></td>
             <td th:text="${task['priority']}"></td>
-            <td th:text="${task['startTime'].substring(0, 16)}"></td>
-            <td th:text="${task['endTime'].substring(0, 16)}"></td>
-            <td th:text="${task['location']['coordinates']}"></td>
+            <td th:text="${task['startTime']}"></td>
+            <td th:text="${task['endTime']}"></td>
         </tr>
         </tbody>
     </table>

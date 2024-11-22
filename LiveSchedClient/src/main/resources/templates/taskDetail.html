@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LiveSched - Task Details</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Task Details</h1>
+    <table class="table table-bordered">
+        <tbody>
+        <tr>
+            <th>Task ID</th>
+            <td th:text="${task['taskId']}"></td>
+        </tr>
+        <tr>
+            <th>Task Name</th>
+            <td th:text="${task['taskName']}"></td>
+        </tr>
+        <tr>
+            <th>Priority</th>
+            <td th:text="${task['priority']}"></td>
+        </tr>
+        <tr>
+            <th>Start Time</th>
+            <td th:text="${task['startTime'].substring(0, 16)}"></td>
+        </tr>
+        <tr>
+            <th>End Time</th>
+            <td th:text="${task['endTime'].substring(0, 16)}"></td>
+        </tr>
+        <tr>
+            <th>Location</th>
+            <td th:text="${task['location']['coordinates']}"></td>
+        </tr>
+        <tr>
+            <th>Resources Needed</th>
+            <td>
+                <ul>
+                    <li th:each="entry : ${task['resources']}" th:text="${entry.key} + ': ' + ${entry.value}"></li>
+                </ul>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+</body>
+</html>
