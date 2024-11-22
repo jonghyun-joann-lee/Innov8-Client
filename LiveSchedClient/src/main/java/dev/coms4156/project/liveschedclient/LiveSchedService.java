@@ -144,7 +144,6 @@ public class LiveSchedService {
    * @param endTime   The end time of the task in the format "yyyy-MM-dd HH:mm".
    * @param latitude  The latitude of the task's location.
    * @param longitude The longitude of the task's location.
-   *
    * @return A map containing the response from the server.
    */
   public Map<String, Object> addTask(String taskName, int priority, String startTime,
