@@ -58,7 +58,7 @@ public class LiveSchedService {
   /**
    * Retrieves all tasks from the server's retrieveTasks endpoint.
    *
-   * @return A message indicating the response from the server.
+   * @return A list of map containing the response from the server.
    */
   public List<Map<String, Object>> getAllTasks() {
     try {
@@ -94,7 +94,7 @@ public class LiveSchedService {
    *
    * @param taskId A {@code String} representing the ID of the task to retrieve.
    *
-   * @return A message indicating the response from the server.
+   * @return A map containing the response from the server.
    */
   public Map<String, Object> getTaskById(String taskId) {
     try {
@@ -144,7 +144,8 @@ public class LiveSchedService {
    * @param endTime   The end time of the task in the format "yyyy-MM-dd HH:mm".
    * @param latitude  The latitude of the task's location.
    * @param longitude The longitude of the task's location.
-   * @return A message indicating the response from the server.
+   *
+   * @return A map containing the response from the server.
    */
   public Map<String, Object> addTask(String taskName, int priority, String startTime,
                                      String endTime, double latitude, double longitude) {
@@ -166,6 +167,29 @@ public class LiveSchedService {
       }
     } catch (Exception e) {
       return Map.of("error", "Failed to add task");
+    }
+  }
+
+  /**
+   * Deletes a task from the server's database through the deleteTask endpoint.
+   *
+   * @param taskId The ID of the task to be deleted.
+   *
+   * @return A map containing the response from the server.
+   */
+  public Map<String, Object> deleteTask(String taskId) {
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/deleteTask?taskId=" + taskId,
+          HttpMethod.DELETE, null, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        return Map.of("message", response.getBody());
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
+      }
+    } catch (Exception e) {
+      return Map.of("error", "Failed to delete task");
     }
   }
 
