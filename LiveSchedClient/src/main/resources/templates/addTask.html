@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LiveSched - Add New Task</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-3">Add New Task</h1>
+
+        <!-- Error Message -->
+        <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+
+        <!-- Add Task Form -->
+        <form method="post" action="/task/add">
+          <div class="form-group">
+            <label for="taskName">Task Name</label>
+            <input type="text" class="form-control" id="taskName" name="taskName" required>
+          </div>
+          <div class="form-group">
+            <label for="priority">Priority (1 = Most Important, 5 = Least Important)</label>
+            <input type="number" class="form-control" id="priority" name="priority" min="1" max="5" required>
+          </div>
+          <div class="form-group">
+            <label for="startTime">Start Time (yyyy-MM-dd HH:mm)</label>
+            <input type="text" class="form-control" id="startTime" name="startTime" required>
+          </div>
+          <div class="form-group">
+            <label for="endTime">End Time (yyyy-MM-dd HH:mm)</label>
+            <input type="text" class="form-control" id="endTime" name="endTime" required>
+          </div>
+          <div class="form-group">
+            <label for="latitude">Latitude</label>
+            <input type="number" step="0.000001" class="form-control" id="latitude" name="latitude" required>
+          </div>
+          <div class="form-group">
+            <label for="longitude">Longitude</label>
+            <input type="number" step="0.000001" class="form-control" id="longitude" name="longitude" required>
+          </div>
+          <div class="form-group d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+          </div>
+      </form>
+    </div>
+</body>
+</html>
