@@ -146,4 +146,23 @@ public class MainController {
     return "redirect:/task/" + newTask.get("taskId"); // Redirect to the new task's page
   }
 
+  /**
+   * Handles the deletion of a task by its ID.
+   *
+   * @param taskId The ID of the task to be deleted.
+   * @param model  The Model object used to pass data to the view.
+   * @return A String containing the name of the HTML file to render:
+   *         - If the task is deleted successfully, redirects to the task dashboard.
+   *         - If an error occurs, stays on the task detail page with an error message.
+   */
+  @PostMapping("/task/{taskId}/delete")
+  public String deleteTask(@PathVariable String taskId, Model model) {
+    Map<String, Object> response = liveSchedService.deleteTask(taskId);
+    if (response.containsKey("error")) {
+      model.addAttribute("message", response.get("error"));
+      return "taskDetail"; // Stay on the task page with the error message
+    }
+    return "redirect:/dashboard"; // Redirect to the dashboard after successful deletion
+  }
+
 }
