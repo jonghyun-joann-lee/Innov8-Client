@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -28,7 +30,7 @@ public class MainController {
   }
 
   /**
-   * Handles requests to the homepage.
+   * Displays the homepage.
    * Calls the server's index API to establish a connection.
    *
    * @return A String containing the name of the HTML file to render the homepage.
@@ -40,18 +42,18 @@ public class MainController {
   }
 
   /**
-   * Handles requests to the dashboard page.
-   * Retrieves tasks from the LiveSched service and adds them to the model for rendering.
+   * Displays the task dashboard page.
+   * Allows searching for a task by its ID and sorting tasks by priority.
    *
-   * @param model The Model object used to pass data to the view.
+   * @param taskId Optional.   The ID of the task to search for.
+   * @param sort Optional.     The sort order for tasks, either {@code "asc"} or {@code "desc"}.
+   * @param model              The Model object used to pass data to the view.
    * @return A String containing the name of the HTML file to render the dashboard.
    */
   @GetMapping("/dashboard")
-  public String dashboard(
-      @RequestParam(value = "taskId", required = false) String taskId,
-      @RequestParam(value = "sort", required = false) String sort,
-      Model model
-  ) {
+  public String dashboard(@RequestParam(value = "taskId", required = false) String taskId,
+                          @RequestParam(value = "sort", required = false) String sort,
+                          Model model) {
     List<Map<String, Object>> tasks;
 
     if (taskId != null && !taskId.isBlank()) {
@@ -59,7 +61,7 @@ public class MainController {
       Map<String, Object> task = liveSchedService.getTaskById(taskId);
       if (task.containsKey("error")) {
         model.addAttribute("message", task.get("error"));
-        return "dashboard";
+        return "dashboard"; // Redirect back to task dashboard with error message
       } else {
         tasks = List.of(task);
       }
@@ -81,6 +83,67 @@ public class MainController {
 
     model.addAttribute("tasks", tasks);
     return "dashboard";
+  }
+
+  /**
+   * Displays the details of a specific task.
+   *
+   * @param taskId The ID of the task to display.
+   * @param model  The Model object used to pass data to the view.
+   * @return A String containing the name of the HTML file to render the task detail page.
+   */
+  @GetMapping("/task/{taskId}")
+  public String taskDetail(@PathVariable String taskId, Model model) {
+    Map<String, Object> task = liveSchedService.getTaskById(taskId);
+
+    if (task.containsKey("error")) {
+      model.addAttribute("message", task.get("error"));
+      return "dashboard"; // Redirect back to task dashboard with error message
+    }
+
+    model.addAttribute("task", task);
+    return "taskDetail";
+  }
+
+  /**
+   * Displays the page for adding a new task.
+   *
+   * @return A String containing the name of the HTML file to render the add task page.
+   */
+  @GetMapping("/task/add")
+  public String addTask() {
+    return "addTask";
+  }
+
+  /**
+   * Handles the submission of the new task form.
+   *
+   * @param taskName  The name of the task.
+   * @param priority  The priority of the task (1-5).
+   * @param startTime The start time of the task in the format "yyyy-MM-dd HH:mm".
+   * @param endTime   The end time of the task in the format "yyyy-MM-dd HH:mm".
+   * @param latitude  The latitude of the task's location.
+   * @param longitude The longitude of the task's location.
+   * @param model     The Model object used to pass data to the view.
+   * @return A String containing the name of the HTML file to render:
+   *         - If the task is added successfully, redirects to the new task's detail page.
+   *         - If an error occurs, returns to the add task page with the error message.
+   */
+  @PostMapping("/task/add")
+  public String addTask(@RequestParam(value = "taskName") String taskName,
+                        @RequestParam(value = "priority") int priority,
+                        @RequestParam(value = "startTime") String startTime,
+                        @RequestParam(value = "endTime") String endTime,
+                        @RequestParam(value = "latitude") double latitude,
+                        @RequestParam(value = "longitude") double longitude,
+                        Model model) {
+    Map<String, Object> newTask =
+        liveSchedService.addTask(taskName, priority, startTime, endTime, latitude, longitude);
+    if (newTask.containsKey("error")) {
+      model.addAttribute("message", newTask.get("error"));
+      return "addTask"; // Stay on the addTask page with the error message
+    }
+    return "redirect:/task/" + newTask.get("taskId"); // Redirect to the new task's page
   }
 
 }

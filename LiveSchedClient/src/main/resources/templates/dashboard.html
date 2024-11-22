@@ -4,69 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LiveSched - Task Dashboard</title>
-    <link
-            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-            rel="stylesheet"
-    />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
     <style>
         h1 {
             margin: 20px;
             text-align: center;
             color: #333;
         }
+
+        tr[data-href] {
+            cursor: pointer;
+        }
+
+        tr[data-href]:hover {
+            background-color: #f5f5f5;
+        }
     </style>
 </head>
 <body>
-<h1>Task Dashboard</h1>
-<div class="container mt-5">
-    <!-- Search and Sort -->
-    <form method="get" action="/dashboard" class="form-inline mb-3">
-        <div class="form-group mr-3">
-            <input
-                    type="text"
-                    name="taskId"
-                    placeholder="Search by Task ID"
-                    class="form-control"
-            />
-        </div>
-        <div class="form-group mr-3">
-            <select name="sort" class="form-control">
-                <option value="" disabled selected>Sort by Priority</option>
-                <option value="asc">Highest Priority First</option>
-                <option value="desc">Lowest Priority First</option>
-            </select>
-        </div>
-        <div class="form-group mr-3">
-            <button type="submit" class="btn btn-primary">Search/Sort</button>
-        </div>
-    </form>
+    <h1>Task Dashboard</h1>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between mb-3">
+            <!-- Search and Sort -->
+            <form method="get" action="/dashboard" class="form-inline">
+                <div class="form-group mr-3">
+                    <input
+                            type="text"
+                            name="taskId"
+                            placeholder="Search by Task ID"
+                            class="form-control"
+                    />
+                </div>
+                <div class="form-group mr-3">
+                    <select name="sort" class="form-control">
+                        <option value="" disabled selected>Sort by Priority</option>
+                        <option value="asc">Highest Priority First</option>
+                        <option value="desc">Lowest Priority First</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Search/Sort</button>
+                </div>
+            </form>
 
-    <!-- Error Message -->
-    <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+            <!-- Add Task Button -->
+            <a href="/task/add" class="btn btn-success">Add New Task</a>
+        </div>
 
-    <!-- Task Table -->
-    <table class="table table-bordered table-striped" th:if="${tasks}">
-        <thead class="thead-dark">
-        <tr>
-            <th>Task ID</th>
-            <th>Task Name</th>
-            <th>Priority</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Location Coordinates</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="task : ${tasks}">
-            <td th:text="${task['taskId']}"></td>
-            <td th:text="${task['taskName']}"></td>
-            <td th:text="${task['priority']}"></td>
-            <td th:text="${task['startTime'].substring(0, 16)}"></td>
-            <td th:text="${task['endTime'].substring(0, 16)}"></td>
-            <td th:text="${task['location']['coordinates']}"></td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+        <!-- Error Message -->
+        <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+
+        <!-- Task Table -->
+        <table class="table table-bordered" th:if="${tasks}">
+            <thead class="thead-dark">
+            <tr>
+                <th>Task ID</th>
+                <th>Task Name</th>
+                <th>Priority</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="task : ${tasks}" th:attr="data-href='/task/' + ${task['taskId']}" onclick="window.location=this.getAttribute('data-href')">
+                <td th:text="${task['taskId']}"></td>
+                <td th:text="${task['taskName']}"></td>
+                <td th:text="${task['priority']}"></td>
+                <td th:text="${task['startTime']}"></td>
+                <td th:text="${task['endTime']}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
