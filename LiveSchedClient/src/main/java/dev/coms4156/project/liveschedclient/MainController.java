@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * MainController handles routing logic for the LiveSched client application.
@@ -163,6 +164,27 @@ public class MainController {
       return "taskDetail"; // Stay on the task page with the error message
     }
     return "redirect:/dashboard"; // Redirect to the dashboard after successful deletion
+  }
+
+  /**
+   * Handles the modification of a resource for a task.
+   *
+   * @param taskId            The ID of the task to modify the resource for.
+   * @param typeName          The name of the resource type to modify.
+   * @param quantity          The new quantity of the resource type.
+   * @param redirectAttributes The RedirectAttributes object used to pass data for the next request.
+   * @return A String containing the name of the HTML file to render the task detail page.
+   */
+  @PostMapping("/task/{taskId}/modifyResource")
+  public String modifyResource(@PathVariable String taskId,
+                               @RequestParam("typeName") String typeName,
+                               @RequestParam("quantity") int quantity,
+                               RedirectAttributes redirectAttributes) {
+    Map<String, Object> response = liveSchedService.modifyResource(taskId, typeName, quantity);
+    if (response.containsKey("error")) {
+      redirectAttributes.addFlashAttribute("message", response.get("error"));
+    }
+    return "redirect:/task/" + taskId; // Redirect to the task details page
   }
 
 }
