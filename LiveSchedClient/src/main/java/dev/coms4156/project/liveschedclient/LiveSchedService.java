@@ -2,9 +2,11 @@ package dev.coms4156.project.liveschedclient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -191,14 +193,73 @@ public class LiveSchedService {
   }
 
   /**
+   * Retrieves all resource types from the server's database.
+   *
+   * @param clientId The ID of the client retrieving the resources
+   * @return A list of maps containing the resource types
+   */
+  public List<Map<String, Object>> getAllResourceTypes(String clientId) {
+    try {
+      ResponseEntity<String> response = restTemplate.getForEntity(
+          BASE_URL + "/retrieveResourceTypes?clientId=" + clientId, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(response.getBody(), 
+          new TypeReference<List<Map<String, Object>>>() {});
+      } else {
+        return List.of(Map.of("error", "Unexpected response status: " + response.getStatusCode()));
+      }
+    } catch (HttpClientErrorException.NotFound e) {
+      return List.of(); // Return empty list if no resources found
+    } catch (JsonProcessingException e) {
+      return List.of(Map.of("error", "Failed to parse JSON response."));
+    } catch (RestClientException e) {
+      return List.of(Map.of("error", "Error connecting to the service."));
+    }
+  }
+
+  /**
+  * Adds a new resource type to the server's database.
+  *
+  * @param typeName The name of the resource type
+  * @param totalUnits The total number of units available
+  * @param latitude The latitude of the resource's location
+  * @param longitude The longitude of the resource's location
+  * @param clientId The ID of the client adding the resource
+  * @return A map containing the response from the server
+  */
+  public Map<String, Object> addResourceType(String typeName, int totalUnits, 
+                                        double latitude, double longitude, String clientId) {
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/addResourceType?typeName=" + typeName
+              + "&totalUnits=" + totalUnits
+              + "&latitude=" + latitude
+              + "&longitude=" + longitude
+              + "&clientId=" + clientId,
+          HttpMethod.PATCH, null, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        return Map.of("message", "Resource type added successfully");
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
+      }
+    } catch (Exception e) {
+      return Map.of("error", "Failed to add resource type");
+    }
+  }
+  /**
    * Modifies the quantity of a resource type for a task through the server's
    * modifyResourceType endpoint.
    *
    * @param taskId   The ID of the task to modify the resource for.
    * @param typeName The name of the resource type to modify.
    * @param quantity The new quantity of the resource type.
+   * 
    * @return A map containing the response from the server.
-   */
+   */ 
+  
   public Map<String, Object> modifyResource(String taskId, String typeName, int quantity) {
     try {
       ResponseEntity<String> response = restTemplate.exchange(
@@ -214,6 +275,40 @@ public class LiveSchedService {
       }
     } catch (Exception e) {
       return Map.of("error", "Failed to modify resource");
+    }
+  }
+  
+  /**
+   * Deletes a resource type from the server's database through the deleteResourceType endpoint.
+   * The resource type cannot be deleted if it is currently being used by any tasks.
+   *
+   * @param typeName A {@code String} representing the name of the resource type to delete
+   * @param clientId A {@code String} representing the ID of the client deleting the resource
+   * @return A map containing either:
+   *         - A success message if deletion was successful
+   *         - An error message if:
+   *           - The resource type is in use by tasks
+   *           - The resource type was not found
+   *           - An unexpected error occurred during deletion
+   */
+  public Map<String, Object> deleteResourceType(String typeName, String clientId) {
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/deleteResourceType?typeName=" + typeName
+              + "&clientId=" + clientId,
+          HttpMethod.DELETE, null, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        return Map.of("message", "Resource type deleted successfully");
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
+      }
+    } catch (HttpClientErrorException.BadRequest e) {
+      return Map.of("error", "Cannot delete a resource type that is currently in use");
+    } catch (HttpClientErrorException.NotFound e) {
+      return Map.of("error", "Resource type not found");
+    } catch (Exception e) {
+      return Map.of("error", "Failed to delete resource type");
     }
   }
 

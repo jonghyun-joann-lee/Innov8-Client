@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>LiveSched - Dashboards</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>LiveSched Dashboards</h1>
+            <div>
+                <span class="mr-3">Client ID: <strong th:text="${clientId}"></strong></span>
+                <a href="/logout" class="btn btn-outline-danger">Logout</a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Task Dashboard</h5>
+                        <p class="card-text">Manage and monitor all tasks</p>
+                        <a href="/taskDashboard" class="btn btn-primary">Go to Tasks</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Resource Dashboard</h5>
+                        <p class="card-text">Manage resource types and availability</p>
+                        <a href="/resourceDashboard" class="btn btn-primary">Go to Resources</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Schedule Dashboard</h5>
+                        <p class="card-text">View and manage schedules</p>
+                        <a href="/scheduleDashboard" class="btn btn-primary">Go to Schedules</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
