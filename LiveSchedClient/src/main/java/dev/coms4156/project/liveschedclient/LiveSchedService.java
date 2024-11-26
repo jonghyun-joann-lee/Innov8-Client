@@ -200,21 +200,22 @@ public class LiveSchedService {
    */
   public List<Map<String, Object>> getAllResourceTypes(String clientId) {
     try {
-        ResponseEntity<String> response = restTemplate.getForEntity(
-            BASE_URL + "/retrieveResourceTypes?clientId=" + clientId, String.class);
+      ResponseEntity<String> response = restTemplate.getForEntity(
+          BASE_URL + "/retrieveResourceTypes?clientId=" + clientId, String.class);
 
-        if (response.getStatusCode().is2xxSuccessful()) {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
-        } else {
-            return List.of(Map.of("error", "Unexpected response status: " + response.getStatusCode()));
-        }
+      if (response.getStatusCode().is2xxSuccessful()) {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(response.getBody(), 
+          new TypeReference<List<Map<String, Object>>>() {});
+      } else {
+        return List.of(Map.of("error", "Unexpected response status: " + response.getStatusCode()));
+      }
     } catch (HttpClientErrorException.NotFound e) {
-        return List.of(); // Return empty list if no resources found
+      return List.of(); // Return empty list if no resources found
     } catch (JsonProcessingException e) {
-        return List.of(Map.of("error", "Failed to parse JSON response."));
+      return List.of(Map.of("error", "Failed to parse JSON response."));
     } catch (RestClientException e) {
-        return List.of(Map.of("error", "Error connecting to the service."));
+      return List.of(Map.of("error", "Error connecting to the service."));
     }
   }
 
@@ -231,21 +232,21 @@ public class LiveSchedService {
   public Map<String, Object> addResourceType(String typeName, int totalUnits, 
                                         double latitude, double longitude, String clientId) {
     try {
-        ResponseEntity<String> response = restTemplate.exchange(
-            BASE_URL + "/addResourceType?typeName=" + typeName
-                + "&totalUnits=" + totalUnits
-                + "&latitude=" + latitude
-                + "&longitude=" + longitude
-                + "&clientId=" + clientId,
-            HttpMethod.PATCH, null, String.class);
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/addResourceType?typeName=" + typeName
+              + "&totalUnits=" + totalUnits
+              + "&latitude=" + latitude
+              + "&longitude=" + longitude
+              + "&clientId=" + clientId,
+          HttpMethod.PATCH, null, String.class);
 
-        if (response.getStatusCode().is2xxSuccessful()) {
-            return Map.of("message", "Resource type added successfully");
-        } else {
-            return Map.of("error", "Unexpected response status: " + response.getStatusCode());
-        }
+      if (response.getStatusCode().is2xxSuccessful()) {
+        return Map.of("message", "Resource type added successfully");
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
+      }
     } catch (Exception e) {
-        return Map.of("error", "Failed to add resource type");
+      return Map.of("error", "Failed to add resource type");
     }
   }
   /**
@@ -255,8 +256,10 @@ public class LiveSchedService {
    * @param taskId   The ID of the task to modify the resource for.
    * @param typeName The name of the resource type to modify.
    * @param quantity The new quantity of the resource type.
+   * 
    * @return A map containing the response from the server.
-   */
+   */ 
+  
   public Map<String, Object> modifyResource(String taskId, String typeName, int quantity) {
     try {
       ResponseEntity<String> response = restTemplate.exchange(
@@ -289,24 +292,24 @@ public class LiveSchedService {
    *           - An unexpected error occurred during deletion
    */
   public Map<String, Object> deleteResourceType(String typeName, String clientId) {
-      try {
-          ResponseEntity<String> response = restTemplate.exchange(
-              BASE_URL + "/deleteResourceType?typeName=" + typeName
-                  + "&clientId=" + clientId,
-              HttpMethod.DELETE, null, String.class);
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/deleteResourceType?typeName=" + typeName
+              + "&clientId=" + clientId,
+          HttpMethod.DELETE, null, String.class);
 
-          if (response.getStatusCode().is2xxSuccessful()) {
-              return Map.of("message", "Resource type deleted successfully");
-          } else {
-              return Map.of("error", "Unexpected response status: " + response.getStatusCode());
-          }
-      } catch (HttpClientErrorException.BadRequest e) {
-          return Map.of("error", "Cannot delete a resource type that is currently in use");
-      } catch (HttpClientErrorException.NotFound e) {
-          return Map.of("error", "Resource type not found");
-      } catch (Exception e) {
-          return Map.of("error", "Failed to delete resource type");
+      if (response.getStatusCode().is2xxSuccessful()) {
+        return Map.of("message", "Resource type deleted successfully");
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
+    } catch (HttpClientErrorException.BadRequest e) {
+      return Map.of("error", "Cannot delete a resource type that is currently in use");
+    } catch (HttpClientErrorException.NotFound e) {
+      return Map.of("error", "Resource type not found");
+    } catch (Exception e) {
+      return Map.of("error", "Failed to delete resource type");
+    }
   }
 
 }

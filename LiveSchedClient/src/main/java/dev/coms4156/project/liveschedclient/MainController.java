@@ -1,5 +1,6 @@
 package dev.coms4156.project.liveschedclient;
 
+import jakarta.servlet.http.HttpSession;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import jakarta.servlet.http.HttpSession;
 
 /**
  * MainController handles routing logic for the LiveSched client application.
@@ -184,122 +183,6 @@ public class MainController {
   }
 
   /**
-   * Displays the resource dashboard page with all resource types.
-   * Allows searching for resources by type name and sorting by total units.
-   *
-   * @param typeName Optional. The name of the resource type to search for
-   * @param sort Optional. The sort order for resources, either "asc" or "desc"
-   * @param model The Model object used to pass data to the view
-   * @return A String containing the name of the HTML file to render the resource dashboard
-   */
-  @GetMapping("/resourceDashboard")
-  public String resourceDashboard(@RequestParam(value = "typeName", required = false) String typeName,
-                                @RequestParam(value = "sort", required = false) String sort,
-                                Model model) {
-      String clientId = (String) session.getAttribute("clientId");
-      if (clientId == null) {
-          return "redirect:/";
-      }
-
-      List<Map<String, Object>> resources;
-      if (typeName != null && !typeName.isBlank()) {
-          // Search by typeName
-          resources = liveSchedService.getAllResourceTypes(clientId).stream()
-                  .filter(resource -> resource.get("typeName").toString()
-                          .toLowerCase().contains(typeName.toLowerCase()))
-                  .toList();
-          if (resources.isEmpty()) {
-              model.addAttribute("message", "No resources found matching: " + typeName);
-          }
-      } else {
-          // Retrieve all resources
-          resources = liveSchedService.getAllResourceTypes(clientId);
-
-          // Apply sorting if specified
-          if (sort != null) {
-              if (sort.equalsIgnoreCase("asc")) {
-                  resources.sort(Comparator.comparing(
-                      resource -> (Integer) ((Map<String, Object>) resource).get("totalUnits")));
-              } else if (sort.equalsIgnoreCase("desc")) {
-                  resources.sort(Comparator.comparing(
-                      resource -> (Integer) ((Map<String, Object>) resource).get("totalUnits"))
-                      .reversed());
-              }
-          }
-      }
-
-      model.addAttribute("resources", resources);
-      model.addAttribute("clientId", clientId);
-      model.addAttribute("searchTypeName", typeName); // maintain search term in form
-      return "resourceDashboard";
-  }
-
-  /**
-   * Displays the page for adding a new resource type.
-   *
-   * @param model The Model object used to pass data to the view
-   * @return A String containing the name of the HTML file to render the add resource page
-   */
-  @GetMapping("/resource/add")
-  public String addResource(Model model) {
-      String clientId = (String) session.getAttribute("clientId");
-      if (clientId == null) {
-          return "redirect:/";
-      }
-      model.addAttribute("clientId", clientId);
-      return "addResource";
-  }
-
-  /**
-   * Handles the submission of the new resource type form.
-   *
-   * @param typeName The name of the resource type
-   * @param totalUnits The total number of units available
-   * @param latitude The latitude of the resource's location
-   * @param longitude The longitude of the resource's location
-   * @param model The Model object used to pass data to the view
-   * @return A String redirecting to the resource dashboard or staying on add resource page if error
-   */
-  @PostMapping("/resource/add")
-  public String addResource(@RequestParam(value = "typeName") String typeName,
-                          @RequestParam(value = "totalUnits") int totalUnits,
-                          @RequestParam(value = "latitude") double latitude,
-                          @RequestParam(value = "longitude") double longitude,
-                          Model model) {
-      String clientId = (String) session.getAttribute("clientId");
-      if (clientId == null) {
-          return "redirect:/";
-      }
-
-      Map<String, Object> result = 
-          liveSchedService.addResourceType(typeName, totalUnits, latitude, longitude, clientId);
-      
-      if (result.containsKey("error")) {
-          model.addAttribute("message", result.get("error"));
-          model.addAttribute("clientId", clientId);
-          return "addResource";
-      }
-      return "redirect:/resourceDashboard";
-  }
-
-  /**
-   * Displays the schedule dashboard page.
-   *
-   * @param model The Model object used to pass data to the view
-   * @return A String containing the name of the HTML file to render the schedule dashboard
-   *         or a redirect to the login page if not logged in
-   */
-  @GetMapping("/scheduleDashboard")
-  public String scheduleDashboard(Model model) {
-    String clientId = (String) session.getAttribute("clientId");
-    if (clientId == null) {
-      return "redirect:/";
-    }
-    model.addAttribute("clientId", clientId);
-    return "scheduleDashboard";
-  }
-
-  /**
    * Handles the submission of the new task form.
    *
    * @param taskName  The name of the task.
@@ -334,6 +217,123 @@ public class MainController {
       return "addTask"; // Stay on the addTask page with the error message
     }
     return "redirect:/task/" + newTask.get("taskId"); // Redirect to the new task's page
+  }
+
+  /**
+   * Displays the resource dashboard page with all resource types.
+   * Allows searching for resources by type name and sorting by total units.
+   *
+   * @param typeName Optional. The name of the resource type to search for
+   * @param sort Optional. The sort order for resources, either "asc" or "desc"
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the resource dashboard
+   */
+  @GetMapping("/resourceDashboard")
+  public String resourceDashboard(@RequestParam(value = "typeName", required = false) 
+                                String typeName,
+                                @RequestParam(value = "sort", required = false) 
+                                String sort, Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
+    List<Map<String, Object>> resources;
+    if (typeName != null && !typeName.isBlank()) {
+      // Search by typeName
+      resources = liveSchedService.getAllResourceTypes(clientId).stream()
+              .filter(resource -> resource.get("typeName").toString()
+                      .toLowerCase().contains(typeName.toLowerCase()))
+              .toList();
+      if (resources.isEmpty()) {
+        model.addAttribute("message", "No resources found matching: " + typeName);
+      }
+    } else {
+      // Retrieve all resources
+      resources = liveSchedService.getAllResourceTypes(clientId);
+
+      // Apply sorting if specified
+      if (sort != null) {
+        if (sort.equalsIgnoreCase("asc")) {
+          resources.sort(Comparator.comparing(
+              resource -> (Integer) ((Map<String, Object>) resource).get("totalUnits")));
+        } else if (sort.equalsIgnoreCase("desc")) {
+          resources.sort(Comparator.comparing(
+              resource -> (Integer) ((Map<String, Object>) resource).get("totalUnits"))
+              .reversed());
+        }
+      }
+    }
+
+    model.addAttribute("resources", resources);
+    model.addAttribute("clientId", clientId);
+    model.addAttribute("searchTypeName", typeName); // Maintain search term in form
+    return "resourceDashboard";
+  }
+
+  /**
+   * Displays the page for adding a new resource type.
+   *
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the add resource page
+   */
+  @GetMapping("/resource/add")
+  public String addResource(Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+    model.addAttribute("clientId", clientId);
+    return "addResource";
+  }
+
+  /**
+   * Handles the submission of the new resource type form.
+   *
+   * @param typeName The name of the resource type
+   * @param totalUnits The total number of units available
+   * @param latitude The latitude of the resource's location
+   * @param longitude The longitude of the resource's location
+   * @param model The Model object used to pass data to the view
+   * @return A String redirecting to the resource dashboard or staying on add resource page if error
+   */
+  @PostMapping("/resource/add")
+  public String addResource(@RequestParam(value = "typeName") String typeName,
+                          @RequestParam(value = "totalUnits") int totalUnits,
+                          @RequestParam(value = "latitude") double latitude,
+                          @RequestParam(value = "longitude") double longitude,
+                          Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
+    Map<String, Object> result = 
+        liveSchedService.addResourceType(typeName, totalUnits, latitude, longitude, clientId);
+    
+    if (result.containsKey("error")) {
+      model.addAttribute("message", result.get("error"));
+      model.addAttribute("clientId", clientId);
+      return "addResource";
+    }
+    return "redirect:/resourceDashboard";
+  }
+
+  /**
+   * Displays the schedule dashboard page.
+   *
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the schedule dashboard
+   *         or a redirect to the login page if not logged in
+   */
+  @GetMapping("/scheduleDashboard")
+  public String scheduleDashboard(Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+    model.addAttribute("clientId", clientId);
+    return "scheduleDashboard";
   }
 
   /**
@@ -391,18 +391,18 @@ public class MainController {
   @PostMapping("/resource/delete")
   public String deleteResource(@RequestParam(value = "typeName") String typeName,
                             RedirectAttributes redirectAttributes) {
-      String clientId = (String) session.getAttribute("clientId");
-      if (clientId == null) {
-          return "redirect:/";
-      }
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
 
-      Map<String, Object> result = liveSchedService.deleteResourceType(typeName, clientId);
-      if (result.containsKey("error")) {
-          redirectAttributes.addFlashAttribute("message", result.get("error"));
-      } else {
-          redirectAttributes.addFlashAttribute("message", "Resource type deleted successfully");
-      }
-      return "redirect:/resourceDashboard";
+    Map<String, Object> result = liveSchedService.deleteResourceType(typeName, clientId);
+    if (result.containsKey("error")) {
+      redirectAttributes.addFlashAttribute("message", result.get("error"));
+    } else {
+      redirectAttributes.addFlashAttribute("message", "Resource type deleted successfully");
+    }
+    return "redirect:/resourceDashboard";
   }
 
 }
