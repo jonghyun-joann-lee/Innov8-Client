@@ -185,20 +185,52 @@ public class MainController {
 
   /**
    * Displays the resource dashboard page with all resource types.
+   * Allows searching for resources by type name and sorting by total units.
    *
+   * @param typeName Optional. The name of the resource type to search for
+   * @param sort Optional. The sort order for resources, either "asc" or "desc"
    * @param model The Model object used to pass data to the view
    * @return A String containing the name of the HTML file to render the resource dashboard
    */
   @GetMapping("/resourceDashboard")
-  public String resourceDashboard(Model model) {
+  public String resourceDashboard(@RequestParam(value = "typeName", required = false) String typeName,
+                                @RequestParam(value = "sort", required = false) String sort,
+                                Model model) {
       String clientId = (String) session.getAttribute("clientId");
       if (clientId == null) {
           return "redirect:/";
       }
 
-      List<Map<String, Object>> resources = liveSchedService.getAllResourceTypes(clientId);
+      List<Map<String, Object>> resources;
+      if (typeName != null && !typeName.isBlank()) {
+          // Search by typeName
+          resources = liveSchedService.getAllResourceTypes(clientId).stream()
+                  .filter(resource -> resource.get("typeName").toString()
+                          .toLowerCase().contains(typeName.toLowerCase()))
+                  .toList();
+          if (resources.isEmpty()) {
+              model.addAttribute("message", "No resources found matching: " + typeName);
+          }
+      } else {
+          // Retrieve all resources
+          resources = liveSchedService.getAllResourceTypes(clientId);
+
+          // Apply sorting if specified
+          if (sort != null) {
+              if (sort.equalsIgnoreCase("asc")) {
+                  resources.sort(Comparator.comparing(
+                      resource -> (Integer) ((Map<String, Object>) resource).get("totalUnits")));
+              } else if (sort.equalsIgnoreCase("desc")) {
+                  resources.sort(Comparator.comparing(
+                      resource -> (Integer) ((Map<String, Object>) resource).get("totalUnits"))
+                      .reversed());
+              }
+          }
+      }
+
       model.addAttribute("resources", resources);
       model.addAttribute("clientId", clientId);
+      model.addAttribute("searchTypeName", typeName); // maintain search term in form
       return "resourceDashboard";
   }
 
