@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LiveSched - Resource Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Header with Navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Resource Dashboard</h1>
+            <div>
+                <span class="mr-3">Client ID: <strong th:text="${clientId}"></strong></span>
+                <a href="/dashboards" class="btn btn-secondary mr-2">Back to Dashboards</a>
+                <a href="/logout" class="btn btn-outline-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- Add Resource Button -->
+        <div class="mb-3">
+            <a href="/resource/add" class="btn btn-success">Add New Resource Type</a>
+        </div>
+
+        <!-- Error Message -->
+        <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+
+        <!-- Resource Table -->
+        <table class="table table-bordered" th:if="${resources != null && !resources.empty}">
+          <thead class="thead-dark">
+              <tr>
+                  <th>Resource Type</th>
+                  <th>Total Units</th>
+                  <th>Location</th>
+                  <th>Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr th:each="resource : ${resources}">
+                  <td th:text="${resource['typeName']}"></td>
+                  <td th:text="${resource['totalUnits']}"></td>
+                  <td th:text="${resource['latitude'] + ', ' + resource['longitude']}"></td>
+                  <td>
+                      <form method="post" th:action="@{'/resource/delete'}" 
+                            style="display:inline;" 
+                            onsubmit="return confirm('Are you sure you want to delete this resource type?');">
+                          <input type="hidden" name="typeName" th:value="${resource['typeName']}" />
+                          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                      </form>
+                  </td>
+              </tr>
+          </tbody>
+        </table>
+        <!-- No Resources Message -->
+        <div th:if="${resources == null || resources.empty}" class="alert alert-info">
+            No resource types found. Add a new resource type to get started.
+        </div>
+    </div>
+</body>
+</html>

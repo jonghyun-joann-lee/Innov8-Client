@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LiveSched - Add New Resource Type</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Add New Resource Type</h1>
+            <div>
+                <span class="mr-3">Client ID: <strong th:text="${clientId}"></strong></span>
+                <a href="/dashboards" class="btn btn-secondary mr-2">Back to Dashboards</a>
+                <a href="/logout" class="btn btn-outline-danger">Logout</a>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+
+        <!-- Add Resource Form -->
+        <form method="post" action="/resource/add">
+            <div class="form-group">
+                <label for="typeName">Resource Type Name</label>
+                <input type="text" class="form-control" id="typeName" name="typeName" required>
+            </div>
+            <div class="form-group">
+                <label for="totalUnits">Total Units Available</label>
+                <input type="number" class="form-control" id="totalUnits" name="totalUnits" min="1" required>
+            </div>
+            <div class="form-group">
+                <label for="latitude">Latitude</label>
+                <input type="number" step="0.000001" class="form-control" id="latitude" name="latitude" required>
+            </div>
+            <div class="form-group">
+                <label for="longitude">Longitude</label>
+                <input type="number" step="0.000001" class="form-control" id="longitude" name="longitude" required>
+            </div>
+            <div class="form-group d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">Add Resource Type</button>
+                <a href="/resourceDashboard" class="btn btn-secondary">Back to Resource Dashboard</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

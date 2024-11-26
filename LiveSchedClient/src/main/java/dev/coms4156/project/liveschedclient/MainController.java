@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpSession;
+
 /**
  * MainController handles routing logic for the LiveSched client application.
  */
@@ -29,17 +31,63 @@ public class MainController {
   public MainController(LiveSchedService liveSchedService) {
     this.liveSchedService = liveSchedService;
   }
+  
+  @Autowired
+  private HttpSession session;
 
   /**
-   * Displays the homepage.
-   * Calls the server's index API to establish a connection.
+   * Displays the login page if not logged in, otherwise redirects to dashboards.
    *
-   * @return A String containing the name of the HTML file to render the homepage.
+   * @return A String containing the name of the HTML file to render the login page
+   *         or a redirect to the dashboards page.
    */
-  @GetMapping({"/", "/index", "/home"})
+  @GetMapping("/")
   public String index() {
-    liveSchedService.pingServer();
+    if (session.getAttribute("clientId") != null) {
+      return "redirect:/dashboards";
+    }
     return "index";
+  }
+
+  /**
+   * Handles the login process by storing the client ID in the session.
+   *
+   * @param clientId The ID of the client logging in
+   * @param redirectAttributes The RedirectAttributes object used to pass data for the next request
+   * @return A String redirecting to the dashboards page
+   */
+  @PostMapping("/login")
+  public String login(@RequestParam String clientId, RedirectAttributes redirectAttributes) {
+    session.setAttribute("clientId", clientId);
+    return "redirect:/dashboards";
+  }
+
+  /**
+   * Handles the logout process by removing the client ID from the session.
+   *
+   * @return A String redirecting to the login page
+   */
+  @GetMapping("/logout")
+  public String logout() {
+    session.removeAttribute("clientId");
+    return "redirect:/";
+  }
+
+  /**
+   * Displays the dashboard selection page.
+   *
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the dashboards page
+   *         or a redirect to the login page if not logged in
+   */
+  @GetMapping("/dashboards")
+  public String dashboards(Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+    model.addAttribute("clientId", clientId);
+    return "dashboards";
   }
 
   /**
@@ -51,18 +99,22 @@ public class MainController {
    * @param model              The Model object used to pass data to the view.
    * @return A String containing the name of the HTML file to render the dashboard.
    */
-  @GetMapping("/dashboard")
+  @GetMapping("/taskDashboard")
   public String dashboard(@RequestParam(value = "taskId", required = false) String taskId,
                           @RequestParam(value = "sort", required = false) String sort,
                           Model model) {
-    List<Map<String, Object>> tasks;
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
 
+    List<Map<String, Object>> tasks;
     if (taskId != null && !taskId.isBlank()) {
       // Search by taskId
       Map<String, Object> task = liveSchedService.getTaskById(taskId);
       if (task.containsKey("error")) {
         model.addAttribute("message", task.get("error"));
-        return "dashboard"; // Redirect back to task dashboard with error message
+        return "taskDashboard"; // Redirect back to task dashboard with error message
       } else {
         tasks = List.of(task);
       }
@@ -83,7 +135,8 @@ public class MainController {
     }
 
     model.addAttribute("tasks", tasks);
-    return "dashboard";
+    model.addAttribute("clientId", clientId);
+    return "taskDashboard";
   }
 
   /**
@@ -91,10 +144,16 @@ public class MainController {
    *
    * @param taskId The ID of the task to display.
    * @param model  The Model object used to pass data to the view.
-   * @return A String containing the name of the HTML file to render the task detail page.
+   * @return A String containing the name of the HTML file to render the task detail page
+   *         or a redirect to the login page if not logged in
    */
   @GetMapping("/task/{taskId}")
   public String taskDetail(@PathVariable String taskId, Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
     Map<String, Object> task = liveSchedService.getTaskById(taskId);
 
     if (task.containsKey("error")) {
@@ -103,17 +162,109 @@ public class MainController {
     }
 
     model.addAttribute("task", task);
+    model.addAttribute("clientId", clientId);
     return "taskDetail";
   }
 
   /**
    * Displays the page for adding a new task.
    *
-   * @return A String containing the name of the HTML file to render the add task page.
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the add task page
+   *         or a redirect to the login page if not logged in
    */
   @GetMapping("/task/add")
-  public String addTask() {
+  public String addTask(Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+    model.addAttribute("clientId", clientId);
     return "addTask";
+  }
+
+  /**
+   * Displays the resource dashboard page with all resource types.
+   *
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the resource dashboard
+   */
+  @GetMapping("/resourceDashboard")
+  public String resourceDashboard(Model model) {
+      String clientId = (String) session.getAttribute("clientId");
+      if (clientId == null) {
+          return "redirect:/";
+      }
+
+      List<Map<String, Object>> resources = liveSchedService.getAllResourceTypes(clientId);
+      model.addAttribute("resources", resources);
+      model.addAttribute("clientId", clientId);
+      return "resourceDashboard";
+  }
+
+  /**
+   * Displays the page for adding a new resource type.
+   *
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the add resource page
+   */
+  @GetMapping("/resource/add")
+  public String addResource(Model model) {
+      String clientId = (String) session.getAttribute("clientId");
+      if (clientId == null) {
+          return "redirect:/";
+      }
+      model.addAttribute("clientId", clientId);
+      return "addResource";
+  }
+
+  /**
+   * Handles the submission of the new resource type form.
+   *
+   * @param typeName The name of the resource type
+   * @param totalUnits The total number of units available
+   * @param latitude The latitude of the resource's location
+   * @param longitude The longitude of the resource's location
+   * @param model The Model object used to pass data to the view
+   * @return A String redirecting to the resource dashboard or staying on add resource page if error
+   */
+  @PostMapping("/resource/add")
+  public String addResource(@RequestParam(value = "typeName") String typeName,
+                          @RequestParam(value = "totalUnits") int totalUnits,
+                          @RequestParam(value = "latitude") double latitude,
+                          @RequestParam(value = "longitude") double longitude,
+                          Model model) {
+      String clientId = (String) session.getAttribute("clientId");
+      if (clientId == null) {
+          return "redirect:/";
+      }
+
+      Map<String, Object> result = 
+          liveSchedService.addResourceType(typeName, totalUnits, latitude, longitude, clientId);
+      
+      if (result.containsKey("error")) {
+          model.addAttribute("message", result.get("error"));
+          model.addAttribute("clientId", clientId);
+          return "addResource";
+      }
+      return "redirect:/resourceDashboard";
+  }
+
+  /**
+   * Displays the schedule dashboard page.
+   *
+   * @param model The Model object used to pass data to the view
+   * @return A String containing the name of the HTML file to render the schedule dashboard
+   *         or a redirect to the login page if not logged in
+   */
+  @GetMapping("/scheduleDashboard")
+  public String scheduleDashboard(Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+    model.addAttribute("clientId", clientId);
+    return "scheduleDashboard";
   }
 
   /**
@@ -138,10 +289,16 @@ public class MainController {
                         @RequestParam(value = "latitude") double latitude,
                         @RequestParam(value = "longitude") double longitude,
                         Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
     Map<String, Object> newTask =
         liveSchedService.addTask(taskName, priority, startTime, endTime, latitude, longitude);
     if (newTask.containsKey("error")) {
       model.addAttribute("message", newTask.get("error"));
+      model.addAttribute("clientId", clientId);
       return "addTask"; // Stay on the addTask page with the error message
     }
     return "redirect:/task/" + newTask.get("taskId"); // Redirect to the new task's page
@@ -185,6 +342,35 @@ public class MainController {
       redirectAttributes.addFlashAttribute("message", response.get("error"));
     }
     return "redirect:/task/" + taskId; // Redirect to the task details page
+  }
+  
+  /**
+   * Handles the deletion of a resource type.
+   * Verifies the client is logged in, attempts to delete the resource type,
+   * and handles any potential errors.
+   *
+   * @param typeName The name of the resource type to be deleted
+   * @param redirectAttributes The RedirectAttributes object used to pass 
+   *                          flash messages to the next request
+   * @return A String containing the redirect path:
+   *         - To login page if client is not logged in
+   *         - To resource dashboard after deletion attempt, with appropriate message
+   */
+  @PostMapping("/resource/delete")
+  public String deleteResource(@RequestParam(value = "typeName") String typeName,
+                            RedirectAttributes redirectAttributes) {
+      String clientId = (String) session.getAttribute("clientId");
+      if (clientId == null) {
+          return "redirect:/";
+      }
+
+      Map<String, Object> result = liveSchedService.deleteResourceType(typeName, clientId);
+      if (result.containsKey("error")) {
+          redirectAttributes.addFlashAttribute("message", result.get("error"));
+      } else {
+          redirectAttributes.addFlashAttribute("message", "Resource type deleted successfully");
+      }
+      return "redirect:/resourceDashboard";
   }
 
 }
