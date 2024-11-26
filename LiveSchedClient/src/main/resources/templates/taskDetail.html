@@ -4,11 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LiveSched - Task Details</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
+    <style>
+        .modify-form {
+            display: none;
+        }
+
+        .fixed-column {
+            width: 750px;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1>Task Details</h1>
+        <h1 class="mb-3">Task Details</h1>
+
+        <!-- Error Message -->
+        <p th:if="${message}" th:text="${message}" class="text-danger"></p>
+
         <table class="table table-bordered">
             <tbody>
             <tr>
@@ -25,11 +38,11 @@
             </tr>
             <tr>
                 <th>Start Time</th>
-                <td th:text="${task['startTime'].substring(0, 16)}"></td>
+                <td th:text="${task['startTime']}"></td>
             </tr>
             <tr>
                 <th>End Time</th>
-                <td th:text="${task['endTime'].substring(0, 16)}"></td>
+                <td th:text="${task['endTime']}"></td>
             </tr>
             <tr>
                 <th>Location</th>
@@ -37,15 +50,81 @@
             </tr>
             <tr>
                 <th>Resources Needed</th>
-                <td>
+                <td class="fixed-column">
+                    <p th:if="${task['resources'].isEmpty()}">No resources added yet.</p>
                     <ul>
-                        <li th:each="entry : ${task['resources']}" th:text="${entry.key} + ': ' + ${entry.value}"></li>
+                        <li th:each="entry : ${task['resources']}">
+                            <div class="d-flex align-items-center">
+                                <span th:text="${entry.key} + ': ' + ${entry.value}" class="mr-2"></span>
+                                <button class="btn btn-link btn-sm modify-btn" type="button" onclick="showModifyForm(this)">
+                                    Modify
+                                </button>
+                                <form method="post"
+                                      th:action="@{'/task/' + ${task['taskId']} + '/modifyResource'}"
+                                      class="modify-form ml-2">
+                                    <input type="hidden" name="typeName" th:value="${entry.key}" />
+                                    <input type="number" name="quantity" class="form-control form-control-sm mr-2"
+                                           placeholder="Enter new quantity" min="0" required />
+                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                    <button type="button" class="btn btn-secondary btn-sm ml-2"
+                                            onclick="hideModifyForm(this)">Cancel</button>
+                                </form>
+                            </div>
+                        </li>
                     </ul>
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="showAddResourceForm()">Add New Resource</button>
+                    <form method="post"
+                          th:action="@{'/task/' + ${task['taskId']} + '/modifyResource'}"
+                          id="add-resource-form" class="modify-form mt-3">
+                        <div class="d-flex align-items-center">
+                            <input type="text" name="typeName" class="form-control form-control-sm mr-2"
+                                   placeholder="Enter resource type" required />
+                            <input type="number" name="quantity" class="form-control form-control-sm mr-2"
+                                   placeholder="Enter quantity" min="0" required />
+                            <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                            <button type="button" class="btn btn-secondary btn-sm ml-2"
+                                    onclick="hideAddResourceForm()">Cancel</button>
+                        </div>
+                    </form>
                 </td>
             </tr>
             </tbody>
         </table>
-        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+
+        <div class="form-group d-flex justify-content-between">
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            <form method="post" th:action="@{'/task/' + ${task['taskId']} + '/delete'}" onsubmit="return confirmDeleteTask();">
+                <button type="submit" class="btn btn-danger">Delete Task</button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        function showModifyForm(button) {
+            let form = button.nextElementSibling;
+            form.style.display = 'flex';
+            button.style.display = 'none';
+        }
+
+        function hideModifyForm(button) {
+            let form = button.closest('.modify-form');
+            form.style.display = 'none';
+            form.previousElementSibling.style.display = 'inline';
+        }
+
+        function showAddResourceForm() {
+            let form = document.getElementById('add-resource-form');
+            form.style.display = 'block';
+        }
+
+        function hideAddResourceForm() {
+            let form = document.getElementById('add-resource-form');
+            form.style.display = 'none';
+        }
+
+        function confirmDeleteTask() {
+            return confirm("Are you sure you want to delete this task?");
+        }
+    </script>
 </body>
 </html>

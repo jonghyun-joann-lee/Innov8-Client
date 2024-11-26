@@ -12,3 +12,5 @@
 - https://stackoverflow.com/questions/4632738/how-to-add-hyperlink-to-table-row-tr
 - https://behumblefool.medium.com/spring-boot-resttemplate-patch-request-fix-8b44b16ff2c8
 - https://stackoverflow.com/questions/29447382/resttemplate-patch-request
+- https://www.w3schools.com/jsref/event_onclick.asp
+- https://www.codejava.net/frameworks/spring/spring-redirectview-and-redirectattributes-examples

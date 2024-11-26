@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * MainController handles routing logic for the LiveSched client application.
@@ -144,6 +145,46 @@ public class MainController {
       return "addTask"; // Stay on the addTask page with the error message
     }
     return "redirect:/task/" + newTask.get("taskId"); // Redirect to the new task's page
+  }
+
+  /**
+   * Handles the deletion of a task by its ID.
+   *
+   * @param taskId The ID of the task to be deleted.
+   * @param model  The Model object used to pass data to the view.
+   * @return A String containing the name of the HTML file to render:
+   *         - If the task is deleted successfully, redirects to the task dashboard.
+   *         - If an error occurs, stays on the task detail page with an error message.
+   */
+  @PostMapping("/task/{taskId}/delete")
+  public String deleteTask(@PathVariable String taskId, Model model) {
+    Map<String, Object> response = liveSchedService.deleteTask(taskId);
+    if (response.containsKey("error")) {
+      model.addAttribute("message", response.get("error"));
+      return "taskDetail"; // Stay on the task page with the error message
+    }
+    return "redirect:/dashboard"; // Redirect to the dashboard after successful deletion
+  }
+
+  /**
+   * Handles the modification of a resource for a task.
+   *
+   * @param taskId            The ID of the task to modify the resource for.
+   * @param typeName          The name of the resource type to modify.
+   * @param quantity          The new quantity of the resource type.
+   * @param redirectAttributes The RedirectAttributes object used to pass data for the next request.
+   * @return A String containing the name of the HTML file to render the task detail page.
+   */
+  @PostMapping("/task/{taskId}/modifyResource")
+  public String modifyResource(@PathVariable String taskId,
+                               @RequestParam("typeName") String typeName,
+                               @RequestParam("quantity") int quantity,
+                               RedirectAttributes redirectAttributes) {
+    Map<String, Object> response = liveSchedService.modifyResource(taskId, typeName, quantity);
+    if (response.containsKey("error")) {
+      redirectAttributes.addFlashAttribute("message", response.get("error"));
+    }
+    return "redirect:/task/" + taskId; // Redirect to the task details page
   }
 
 }
