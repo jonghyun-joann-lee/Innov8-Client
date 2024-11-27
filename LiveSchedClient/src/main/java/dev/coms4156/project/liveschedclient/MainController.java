@@ -42,6 +42,7 @@ public class MainController {
    */
   @GetMapping("/")
   public String index() {
+    liveSchedService.pingServer();
     if (session.getAttribute("clientId") != null) {
       return "redirect:/dashboards";
     }
@@ -110,16 +111,18 @@ public class MainController {
     List<Map<String, Object>> tasks;
     if (taskId != null && !taskId.isBlank()) {
       // Search by taskId
-      Map<String, Object> task = liveSchedService.getTaskById(taskId);
+      Map<String, Object> task = liveSchedService.getTaskById(taskId, clientId);
       if (task.containsKey("error")) {
-        model.addAttribute("message", task.get("error"));
+        model.addAttribute("message", "No task found with ID: " + taskId);
+        tasks = liveSchedService.getAllTasks(clientId);
+        model.addAttribute("tasks", tasks);
         return "taskDashboard"; // Redirect back to task dashboard with error message
       } else {
         tasks = List.of(task);
       }
     } else {
       // Retrieve all tasks
-      tasks = liveSchedService.getAllTasks();
+      tasks = liveSchedService.getAllTasks(clientId);
 
       // Apply sorting if specified
       if (sort != null) {
@@ -153,11 +156,11 @@ public class MainController {
       return "redirect:/";
     }
 
-    Map<String, Object> task = liveSchedService.getTaskById(taskId);
+    Map<String, Object> task = liveSchedService.getTaskById(taskId, clientId);
 
     if (task.containsKey("error")) {
       model.addAttribute("message", task.get("error"));
-      return "dashboard"; // Redirect back to task dashboard with error message
+      return "taskDashboard"; // Redirect back to task dashboard with error message
     }
 
     model.addAttribute("task", task);
@@ -209,14 +212,65 @@ public class MainController {
       return "redirect:/";
     }
 
-    Map<String, Object> newTask =
-        liveSchedService.addTask(taskName, priority, startTime, endTime, latitude, longitude);
+    Map<String, Object> newTask = liveSchedService.addTask(
+        taskName, priority, startTime, endTime, latitude, longitude, clientId);
     if (newTask.containsKey("error")) {
       model.addAttribute("message", newTask.get("error"));
       model.addAttribute("clientId", clientId);
       return "addTask"; // Stay on the addTask page with the error message
     }
     return "redirect:/task/" + newTask.get("taskId"); // Redirect to the new task's page
+  }
+
+  /**
+   * Handles the deletion of a task by its ID.
+   *
+   * @param taskId The ID of the task to be deleted.
+   * @param model  The Model object used to pass data to the view.
+   * @return A String containing the name of the HTML file to render:
+   *         - If the task is deleted successfully, redirects to the task dashboard.
+   *         - If an error occurs, stays on the task detail page with an error message.
+   */
+  @PostMapping("/task/{taskId}/delete")
+  public String deleteTask(@PathVariable String taskId, Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
+    Map<String, Object> response = liveSchedService.deleteTask(taskId, clientId);
+    if (response.containsKey("error")) {
+      model.addAttribute("message", response.get("error"));
+      return "taskDetail"; // Stay on the task page with the error message
+    }
+    return "redirect:/taskDashboard"; // Redirect to the task dashboard after successful deletion
+  }
+
+  /**
+   * Handles the modification of a resource for a task.
+   *
+   * @param taskId            The ID of the task to modify the resource for.
+   * @param typeName          The name of the resource type to modify.
+   * @param quantity          The new quantity of the resource type.
+   * @param redirectAttributes The RedirectAttributes object used to pass data for the next request.
+   * @return A String containing the name of the HTML file to render the task detail page.
+   */
+  @PostMapping("/task/{taskId}/modifyResource")
+  public String modifyResource(@PathVariable String taskId,
+                               @RequestParam("typeName") String typeName,
+                               @RequestParam("quantity") int quantity,
+                               RedirectAttributes redirectAttributes) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
+    Map<String, Object> response = liveSchedService.modifyResource(
+        taskId, typeName, quantity, clientId);
+    if (response.containsKey("error")) {
+      redirectAttributes.addFlashAttribute("message", response.get("error"));
+    }
+    return "redirect:/task/" + taskId; // Redirect to the task details page
   }
 
   /**
@@ -246,7 +300,9 @@ public class MainController {
                       .toLowerCase().contains(typeName.toLowerCase()))
               .toList();
       if (resources.isEmpty()) {
-        model.addAttribute("message", "No resources found matching: " + typeName);
+        model.addAttribute("message", "No resource type found with name: " + typeName);
+        resources = liveSchedService.getAllResourceTypes(clientId);
+        model.addAttribute("resources", resources);
       }
     } else {
       // Retrieve all resources
@@ -267,7 +323,6 @@ public class MainController {
 
     model.addAttribute("resources", resources);
     model.addAttribute("clientId", clientId);
-    model.addAttribute("searchTypeName", typeName); // Maintain search term in form
     return "resourceDashboard";
   }
 
@@ -320,63 +375,6 @@ public class MainController {
   }
 
   /**
-   * Displays the schedule dashboard page.
-   *
-   * @param model The Model object used to pass data to the view
-   * @return A String containing the name of the HTML file to render the schedule dashboard
-   *         or a redirect to the login page if not logged in
-   */
-  @GetMapping("/scheduleDashboard")
-  public String scheduleDashboard(Model model) {
-    String clientId = (String) session.getAttribute("clientId");
-    if (clientId == null) {
-      return "redirect:/";
-    }
-    model.addAttribute("clientId", clientId);
-    return "scheduleDashboard";
-  }
-
-  /**
-   * Handles the deletion of a task by its ID.
-   *
-   * @param taskId The ID of the task to be deleted.
-   * @param model  The Model object used to pass data to the view.
-   * @return A String containing the name of the HTML file to render:
-   *         - If the task is deleted successfully, redirects to the task dashboard.
-   *         - If an error occurs, stays on the task detail page with an error message.
-   */
-  @PostMapping("/task/{taskId}/delete")
-  public String deleteTask(@PathVariable String taskId, Model model) {
-    Map<String, Object> response = liveSchedService.deleteTask(taskId);
-    if (response.containsKey("error")) {
-      model.addAttribute("message", response.get("error"));
-      return "taskDetail"; // Stay on the task page with the error message
-    }
-    return "redirect:/dashboard"; // Redirect to the dashboard after successful deletion
-  }
-
-  /**
-   * Handles the modification of a resource for a task.
-   *
-   * @param taskId            The ID of the task to modify the resource for.
-   * @param typeName          The name of the resource type to modify.
-   * @param quantity          The new quantity of the resource type.
-   * @param redirectAttributes The RedirectAttributes object used to pass data for the next request.
-   * @return A String containing the name of the HTML file to render the task detail page.
-   */
-  @PostMapping("/task/{taskId}/modifyResource")
-  public String modifyResource(@PathVariable String taskId,
-                               @RequestParam("typeName") String typeName,
-                               @RequestParam("quantity") int quantity,
-                               RedirectAttributes redirectAttributes) {
-    Map<String, Object> response = liveSchedService.modifyResource(taskId, typeName, quantity);
-    if (response.containsKey("error")) {
-      redirectAttributes.addFlashAttribute("message", response.get("error"));
-    }
-    return "redirect:/task/" + taskId; // Redirect to the task details page
-  }
-  
-  /**
    * Handles the deletion of a resource type.
    * Verifies the client is logged in, attempts to delete the resource type,
    * and handles any potential errors.
@@ -403,6 +401,89 @@ public class MainController {
       redirectAttributes.addFlashAttribute("message", "Resource type deleted successfully");
     }
     return "redirect:/resourceDashboard";
+  }
+
+  /**
+   * Displays the schedule dashboard page.
+   *
+   * @param model The Model object used to pass data to the view.
+   * @return A String containing the name of the HTML file to render the schedule dashboard
+   *         or a redirect to the login page if not logged in.
+   */
+  @GetMapping("/scheduleDashboard")
+  public String scheduleDashboard(Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
+    List<Map<String, Object>> schedules = liveSchedService.getSchedule(clientId);
+
+    if (!schedules.isEmpty() && schedules.get(0).containsKey("error")) {
+      model.addAttribute("message", schedules.get(0).get("error"));
+      return "scheduleDashboard"; // Redirect back to schedule dashboard with error message
+    }
+
+    model.addAttribute("schedules", schedules);
+    model.addAttribute("clientId", clientId);
+    return "scheduleDashboard";
+  }
+
+  /**
+   * Updates the schedule with a specified maximum distance.
+   * Uses a default distance if none is provided or the value is invalid.
+   *
+   * @param maxDistance The maximum distance (in kilometers) between tasks and resources.
+   *                    Defaults to 10.0 if not provided or invalid.
+   * @param model       The Model object used to pass data to the view.
+   * @return A String containing redirect path to the schedule dashboard
+   *          or the login page if not logged in.
+   */
+  @PostMapping("/updateSchedule")
+  public String updateSchedule(@RequestParam(value = "maxDistance", required = false)
+                                 Double maxDistance, Model model) {
+    String clientId = (String) session.getAttribute("clientId");
+    if (clientId == null) {
+      return "redirect:/";
+    }
+
+    if (maxDistance == null || maxDistance <= 0) {
+      maxDistance = 10.0; // Default value
+    }
+
+    List<Map<String, Object>> updatedSchedule =
+        liveSchedService.updateSchedule(maxDistance, clientId);
+
+    if (updatedSchedule.isEmpty() || updatedSchedule.get(0).containsKey("error")) {
+      model.addAttribute("message", "Failed to update schedule.");
+    } else {
+      model.addAttribute("message", "Schedule updated successfully.");
+    }
+
+    return "redirect:/scheduleDashboard";
+  }
+
+  /**
+   * Unschedules a task from the master schedule.
+   *
+   * @param taskId  The ID of the task to be unscheduled.
+   * @param clientId The ID of the client.
+   * @param model   The Model object used to pass data to the view.
+   * @return A String containing the redirect path to the schedule dashboard.
+   */
+  @PostMapping("/unscheduleTask")
+  public String unscheduleTask(@RequestParam("taskId") String taskId,
+                               @RequestParam("clientId") String clientId,
+                               Model model) {
+    Map<String, Object> response = liveSchedService.unscheduleTask(taskId, clientId);
+
+    if (response.containsKey("error")) {
+      model.addAttribute("message", response.get("error"));
+    } else {
+      model.addAttribute("message", response.get("message"));
+    }
+
+    return "redirect:/scheduleDashboard";
   }
 
 }
