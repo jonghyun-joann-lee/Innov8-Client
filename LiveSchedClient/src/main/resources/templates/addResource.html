@@ -12,7 +12,7 @@
             <h1>Add New Resource Type</h1>
             <div>
                 <span class="mr-3">Client ID: <strong th:text="${clientId}"></strong></span>
-                <a href="/dashboards" class="btn btn-secondary mr-2">Back to Dashboards</a>
+                <a href="/dashboards" class="btn btn-secondary mr-2">All Dashboards</a>
                 <a href="/logout" class="btn btn-outline-danger">Logout</a>
             </div>
         </div>
@@ -39,8 +39,8 @@
                 <input type="number" step="0.000001" class="form-control" id="longitude" name="longitude" required>
             </div>
             <div class="form-group d-flex justify-content-between">
-                <button type="submit" class="btn btn-primary">Add Resource Type</button>
                 <a href="/resourceDashboard" class="btn btn-secondary">Back to Resource Dashboard</a>
+                <button type="submit" class="btn btn-success">Add Resource Type</button>
             </div>
         </form>
     </div>

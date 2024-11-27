@@ -14,3 +14,4 @@
 - https://stackoverflow.com/questions/29447382/resttemplate-patch-request
 - https://www.w3schools.com/jsref/event_onclick.asp
 - https://www.codejava.net/frameworks/spring/spring-redirectview-and-redirectattributes-examples
+- https://www.w3schools.com/w3css/w3css_modal.asp#:~:text=A%20modal%20is%20a%20dialog,Open%20Modal

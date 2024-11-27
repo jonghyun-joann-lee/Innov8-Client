@@ -51,6 +51,25 @@ public class LiveSchedService {
   }
 
   /**
+   * Helper method to format a timestamp.
+   *
+   * @param timestamp A {@code LocalDateTime} object representing the time to format.
+   * @return A formatted timestamp string, or {@code null} if the input is null.
+   * @throws IllegalArgumentException if timestamp is an unsupported type
+   */
+  private String formatTime(Object timestamp) {
+    if (timestamp == null) {
+      return null;
+    }
+    if (timestamp instanceof String) {
+      return LocalDateTime.parse((String) timestamp).format(FORMATTER);
+    } else if (timestamp instanceof LocalDateTime) {
+      return ((LocalDateTime) timestamp).format(FORMATTER);
+    }
+    throw new IllegalArgumentException("Unsupported timestamp type: " + timestamp.getClass());
+  }
+
+  /**
    * Pings the server's index endpoint to establish connection.
    */
   public void pingServer() {
@@ -60,12 +79,13 @@ public class LiveSchedService {
   /**
    * Retrieves all tasks from the server's retrieveTasks endpoint.
    *
+   * @param clientId A {@code String} representing the ID of the client.
    * @return A list of map containing the response from the server.
    */
-  public List<Map<String, Object>> getAllTasks() {
+  public List<Map<String, Object>> getAllTasks(String clientId) {
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(
-          BASE_URL + "/retrieveTasks", String.class);
+          BASE_URL + "/retrieveTasks?clientId=" + clientId, String.class);
 
       if (response.getStatusCode().is2xxSuccessful()) {
         ObjectMapper mapper = new ObjectMapper();
@@ -74,7 +94,8 @@ public class LiveSchedService {
 
         // Format startTime and endTime for each task
         for (Map<String, Object> task : tasks) {
-          formatTime(task);
+          task.put("startTime", formatTime(task.get("startTime")));
+          task.put("endTime", formatTime(task.get("endTime")));
         }
 
         return tasks;
@@ -95,17 +116,19 @@ public class LiveSchedService {
    * Retrieves a specific task by its ID from the server's retrieveTask endpoint.
    *
    * @param taskId A {@code String} representing the ID of the task to retrieve.
+   * @param clientId A {@code String} representing the ID of the client.
    * @return A map containing the response from the server.
    */
-  public Map<String, Object> getTaskById(String taskId) {
+  public Map<String, Object> getTaskById(String taskId, String clientId) {
     try {
       ResponseEntity<String> response = restTemplate.getForEntity(
-          BASE_URL + "/retrieveTask?taskId=" + taskId, String.class);
+          BASE_URL + "/retrieveTask?taskId=" + taskId + "&clientId=" + clientId, String.class);
 
       if (response.getStatusCode().is2xxSuccessful()) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> task = mapper.readValue(response.getBody(), new TypeReference<>() {});
-        formatTime(task);
+        task.put("startTime", formatTime(task.get("startTime")));
+        task.put("endTime", formatTime(task.get("endTime")));
         return task;
       } else {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
@@ -119,22 +142,7 @@ public class LiveSchedService {
     }
   }
 
-  /**
-   * Helper method to format the timestamps in a task map.
-   *
-   * @param task A map containing task details, including startTime and endTime.
-   */
-  private void formatTime(Map<String, Object> task) {
-    String startTime = (String) task.get("startTime");
-    String endTime = (String) task.get("endTime");
 
-    if (startTime != null) {
-      task.put("startTime", LocalDateTime.parse(startTime).format(FORMATTER));
-    }
-    if (endTime != null) {
-      task.put("endTime", LocalDateTime.parse(endTime).format(FORMATTER));
-    }
-  }
 
   /**
    * Adds a new task to the server's database through the addTask endpoint.
@@ -145,10 +153,12 @@ public class LiveSchedService {
    * @param endTime   The end time of the task in the format "yyyy-MM-dd HH:mm".
    * @param latitude  The latitude of the task's location.
    * @param longitude The longitude of the task's location.
+   * @param clientId A {@code String} representing the ID of the client.
    * @return A map containing the response from the server.
    */
   public Map<String, Object> addTask(String taskName, int priority, String startTime,
-                                     String endTime, double latitude, double longitude) {
+                                     String endTime, double latitude, double longitude,
+                                     String clientId) {
     try {
       ResponseEntity<String> response = restTemplate.exchange(
           BASE_URL + "/addTask?taskName=" + taskName
@@ -156,7 +166,8 @@ public class LiveSchedService {
               + "&startTime=" + startTime
               + "&endTime=" + endTime
               + "&latitude=" + latitude
-              + "&longitude=" + longitude,
+              + "&longitude=" + longitude
+              + "&clientId=" + clientId,
           HttpMethod.PATCH, null, String.class);
 
       if (response.getStatusCode().is2xxSuccessful()) {
@@ -174,12 +185,13 @@ public class LiveSchedService {
    * Deletes a task from the server's database through the deleteTask endpoint.
    *
    * @param taskId The ID of the task to be deleted.
+   * @param clientId A {@code String} representing the ID of the client.
    * @return A map containing the response from the server.
    */
-  public Map<String, Object> deleteTask(String taskId) {
+  public Map<String, Object> deleteTask(String taskId, String clientId) {
     try {
       ResponseEntity<String> response = restTemplate.exchange(
-          BASE_URL + "/deleteTask?taskId=" + taskId,
+          BASE_URL + "/deleteTask?taskId=" + taskId + "&clientId=" + clientId,
           HttpMethod.DELETE, null, String.class);
 
       if (response.getStatusCode().is2xxSuccessful()) {
@@ -195,8 +207,8 @@ public class LiveSchedService {
   /**
    * Retrieves all resource types from the server's database.
    *
-   * @param clientId The ID of the client retrieving the resources
-   * @return A list of maps containing the resource types
+   * @param clientId A {@code String} representing the ID of the client.
+   * @return A list of maps containing the resource types.
    */
   public List<Map<String, Object>> getAllResourceTypes(String clientId) {
     try {
@@ -222,12 +234,12 @@ public class LiveSchedService {
   /**
   * Adds a new resource type to the server's database.
   *
-  * @param typeName The name of the resource type
-  * @param totalUnits The total number of units available
-  * @param latitude The latitude of the resource's location
-  * @param longitude The longitude of the resource's location
-  * @param clientId The ID of the client adding the resource
-  * @return A map containing the response from the server
+  * @param typeName The name of the resource type.
+  * @param totalUnits The total number of units available.
+  * @param latitude The latitude of the resource's location.
+  * @param longitude The longitude of the resource's location.
+  * @param clientId A {@code String} representing the ID of the client.
+  * @return A map containing the response from the server.
   */
   public Map<String, Object> addResourceType(String typeName, int totalUnits, 
                                         double latitude, double longitude, String clientId) {
@@ -256,16 +268,18 @@ public class LiveSchedService {
    * @param taskId   The ID of the task to modify the resource for.
    * @param typeName The name of the resource type to modify.
    * @param quantity The new quantity of the resource type.
-   * 
+   * @param clientId A {@code String} representing the ID of the client.
    * @return A map containing the response from the server.
    */ 
   
-  public Map<String, Object> modifyResource(String taskId, String typeName, int quantity) {
+  public Map<String, Object> modifyResource(String taskId, String typeName, int quantity,
+                                            String clientId) {
     try {
       ResponseEntity<String> response = restTemplate.exchange(
           BASE_URL + "/modifyResourceType?taskId=" + taskId
               + "&typeName=" + typeName
-              + "&quantity=" + quantity,
+              + "&quantity=" + quantity
+              + "&clientId=" + clientId,
           HttpMethod.PATCH, null, String.class);
 
       if (response.getStatusCode().is2xxSuccessful()) {
@@ -282,8 +296,8 @@ public class LiveSchedService {
    * Deletes a resource type from the server's database through the deleteResourceType endpoint.
    * The resource type cannot be deleted if it is currently being used by any tasks.
    *
-   * @param typeName A {@code String} representing the name of the resource type to delete
-   * @param clientId A {@code String} representing the ID of the client deleting the resource
+   * @param typeName A {@code String} representing the name of the resource type to delete.
+   * @param clientId A {@code String} representing the ID of the client.
    * @return A map containing either:
    *         - A success message if deletion was successful
    *         - An error message if:
@@ -309,6 +323,127 @@ public class LiveSchedService {
       return Map.of("error", "Resource type not found");
     } catch (Exception e) {
       return Map.of("error", "Failed to delete resource type");
+    }
+  }
+
+  /**
+   * Retrieves the schedule from the server's retrieveSchedule endpoint.
+   *
+   * @param clientId A {@code String} representing the ID of the client.
+   * @return A list of map containing the response from the server.
+   */
+  public List<Map<String, Object>> getSchedule(String clientId) {
+    try {
+      ResponseEntity<String> response = restTemplate.getForEntity(
+          BASE_URL + "/retrieveSchedule?clientId=" + clientId, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Map<String, Object>> schedules = mapper.readValue(
+            response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+
+        for (Map<String, Object> schedule : schedules) {
+          Map<String, Object> task = (Map<String, Object>) schedule.get("task");
+          if (task != null) {
+            task.put("startTime", formatTime(task.get("startTime")));
+            task.put("endTime", formatTime(task.get("endTime")));
+          }
+
+          List<Map<String, Object>> assignedResources =
+              (List<Map<String, Object>>) schedule.get("assignedResources");
+          if (assignedResources != null) {
+            for (Map<String, Object> resource : assignedResources) {
+              resource.put("availableFrom", formatTime(resource.get("availableFrom")));
+            }
+          }
+        }
+
+        return schedules;
+      } else {
+        return List.of(Map.of(
+            "error", "Unexpected response status: " + response.getStatusCode()));
+      }
+    } catch (HttpClientErrorException.NotFound e) {
+      return List.of(); // Return empty list if no schedules found
+    } catch (JsonProcessingException e) {
+      return List.of(Map.of("error", "Failed to parse JSON response."));
+    } catch (RestClientException e) {
+      return List.of(Map.of("error", "Error connecting to the service."));
+    }
+  }
+
+  /**
+   * Updates and retrieves schedules from the server's updateSchedule endpoint.
+   *
+   * @param maxDistance The maximum distance (in kilometers) between tasks and resources.
+   * @param clientId A {@code String} representing the ID of the client.
+   * @return A list of map containing the response from the server.
+   */
+  public List<Map<String, Object>> updateSchedule(double maxDistance, String clientId) {
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/updateSchedule?maxDistance=" + maxDistance + "&clientId=" + clientId,
+          HttpMethod.PATCH, null, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Map<String, Object>> schedules = mapper.readValue(
+            response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+
+        for (Map<String, Object> schedule : schedules) {
+          Map<String, Object> task = (Map<String, Object>) schedule.get("task");
+          if (task != null) {
+            task.put("startTime", formatTime(task.get("startTime")));
+            task.put("endTime", formatTime(task.get("endTime")));
+          }
+
+          List<Map<String, Object>> assignedResources =
+              (List<Map<String, Object>>) schedule.get("assignedResources");
+          if (assignedResources != null) {
+            for (Map<String, Object> resource : assignedResources) {
+              resource.put("availableFrom", formatTime(resource.get("availableFrom")));
+            }
+          }
+        }
+
+        return schedules;
+      } else {
+        return List.of(Map.of(
+            "error", "Unexpected response status: " + response.getStatusCode()));
+      }
+    } catch (HttpClientErrorException.NotFound e) {
+      return List.of(); // Return empty list if no schedules found
+    } catch (JsonProcessingException e) {
+      return List.of(Map.of("error", "Failed to parse JSON response."));
+    } catch (RestClientException e) {
+      return List.of(Map.of("error", "Error connecting to the service."));
+    }
+  }
+
+  /**
+   * Unschedules a task from the schedule through the server's unscheduleTask endpoint.
+   *
+   * @param taskId  The ID of the task to be unscheduled.
+   * @param clientId A {@code String} representing the ID of the client.
+   * @return A map containing the response from the server.
+   */
+  public Map<String, Object> unscheduleTask(String taskId, String clientId) {
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          BASE_URL + "/unscheduleTask?taskId=" + taskId + "&clientId=" + clientId,
+          HttpMethod.PATCH, null, String.class);
+
+      if (response.getStatusCode().is2xxSuccessful()) {
+        return Map.of("message", "Task unscheduled successfully");
+      } else {
+        return Map.of("error", "Unexpected response status: " + response.getStatusCode());
+      }
+    } catch (HttpClientErrorException.BadRequest e) {
+      return Map.of("error", "Cannot delete a resource type that is currently in use");
+    } catch (HttpClientErrorException.NotFound e) {
+      return Map.of("error", "Task not found");
+    } catch (RestClientException e) {
+      return Map.of("error", "Error connecting to the service");
     }
   }
 
