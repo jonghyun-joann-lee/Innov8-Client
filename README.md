@@ -113,8 +113,8 @@ mvn clean test
 ## Checkstyle Report
 This is the most recent checkstyle report with the most updated code on Nov 27, 2024.
 
-![Checkstyle Report 1](https://drive.google.com/file/d/1-0WQUbRTauL6dt0eZPgJvH1OBPndTC9V/view?usp=sharing)
-![Checkstyle Report 2](https://drive.google.com/file/d/1vaKlp-sgqwZUvEpsmFb0g46Ky_SRlyOS/view?usp=sharing)
+<img width="654" alt="client checkstyle 2024-11-27 at 4 23 13 PM" src="https://github.com/user-attachments/assets/9f82b0d5-7191-4597-af3a-fc7e732588da">
+<img width="1459" alt="client checkstyle 2024-11-27 at 4 24 23 PM" src="https://github.com/user-attachments/assets/07f13e7a-c3c6-4e83-b930-df8565aff12d">
 
 ## A Note to Developers
 This client app shows just one example of how one can use the service located in the linked repository on top of this document. 
