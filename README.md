@@ -86,7 +86,7 @@ In order to build and use our app you must install the following (This guide ass
 
 This app is currently available as a Google cloud based instance that can be accessed using the following URL:
 
-Add URL
+https://innov8-liveschedclientapp.uk.r.appspot.com/
 
 A successful connection should lead you to a homepage that displays this:
 
