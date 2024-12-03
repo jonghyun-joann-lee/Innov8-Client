@@ -89,7 +89,7 @@ This app is currently available as a Google cloud based instance that can be acc
 https://innov8-liveschedclientapp.uk.r.appspot.com/
 
 A successful connection should lead you to a homepage that displays this:
-
+<img width="1224" alt="Screenshot 2024-12-03 at 6 06 45 PM" src="https://github.com/user-attachments/assets/f0e3d017-ada9-480d-aa79-6d4bf67f28e2">
 
 ## Running Checkstyle
 You can run checkstyle by using either one of these commands in the terminal.
