@@ -177,7 +177,7 @@ public class LiveSchedService {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
     } catch (Exception e) {
-      return Map.of("error", "Failed to add task");
+      return Map.of("error", "Failed to add task: " + e.getMessage());
     }
   }
 
@@ -200,7 +200,7 @@ public class LiveSchedService {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
     } catch (Exception e) {
-      return Map.of("error", "Failed to delete task");
+      return Map.of("error", "Failed to delete task: " + e.getMessage());
     }
   }
 
@@ -258,7 +258,7 @@ public class LiveSchedService {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
     } catch (Exception e) {
-      return Map.of("error", "Failed to add resource type");
+      return Map.of("error", "Failed to add resource type: " + e.getMessage());
     }
   }
   /**
@@ -288,7 +288,7 @@ public class LiveSchedService {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
     } catch (Exception e) {
-      return Map.of("error", "Failed to modify resource");
+      return Map.of("error", "Failed to modify resource: " + e.getMessage());
     }
   }
   
@@ -322,7 +322,7 @@ public class LiveSchedService {
     } catch (HttpClientErrorException.NotFound e) {
       return Map.of("error", "Resource type not found");
     } catch (Exception e) {
-      return Map.of("error", "Failed to delete resource type");
+      return Map.of("error", "Failed to delete resource type: " + e.getMessage());
     }
   }
 
@@ -439,7 +439,7 @@ public class LiveSchedService {
         return Map.of("error", "Unexpected response status: " + response.getStatusCode());
       }
     } catch (HttpClientErrorException.BadRequest e) {
-      return Map.of("error", "Cannot delete a resource type that is currently in use");
+      return Map.of("error", "Cannot delete a resource type that is currently in need");
     } catch (HttpClientErrorException.NotFound e) {
       return Map.of("error", "Task not found");
     } catch (RestClientException e) {

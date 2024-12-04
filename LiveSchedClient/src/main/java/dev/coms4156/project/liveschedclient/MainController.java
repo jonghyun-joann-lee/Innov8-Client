@@ -40,7 +40,7 @@ public class MainController {
    * @return A String containing the name of the HTML file to render the login page
    *         or a redirect to the dashboards page.
    */
-  @GetMapping("/")
+  @GetMapping({"/", "/index", "/home"})
   public String index() {
     liveSchedService.pingServer();
     if (session.getAttribute("clientId") != null) {
